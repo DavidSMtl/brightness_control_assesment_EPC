@@ -1,0 +1,9 @@
+#include <zephyr/dt-bindings/adc/adc.h>
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+/ {
+    aliases {
+        sw0 = &user_button_1;
+    };
+};
+
