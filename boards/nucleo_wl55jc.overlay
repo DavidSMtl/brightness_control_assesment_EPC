@@ -9,7 +9,11 @@
         led-green = &led_green_node;
         led-blue = &led_blue_node;
 
-        analog-in-pin = &ldr_sensor_node;
+        analog-in-pin = &zephyr_user;
+    };
+
+    zephyr_user: zephyr,user {
+        io-channels = <&adc1 5>;
     };
 
     rgb_leds {
@@ -32,9 +36,6 @@
 
     };
 
-    ldr_sensor_node: ldr_sensor_node {
-        io-channels = <&adc1 5>; 
-    };
 };
 
 &adc1 {
@@ -45,7 +46,7 @@
     channel@5 {
         reg = <5>;
         zephyr,gain = "ADC_GAIN_1";
-        zephyr,reference = "ADC_REF_VDD_1";
+        zephyr,reference = "ADC_REF_INTERNAL";
         zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
         zephyr,resolution = <12>;
     };
