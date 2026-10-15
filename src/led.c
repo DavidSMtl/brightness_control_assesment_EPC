@@ -1,0 +1,85 @@
+#include <zephyr/kernel.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/logging/log.h>
+#include "led.h"
+
+LOG_MODULE_REGISTER(led, LOG_LEVEL_INF);
+
+#define RED_LED_NODE DT_ALIAS(led_red)
+#define GREEN_LED_NODE DT_ALIAS(led_green)
+#define BLUE_LED_NODE DT_ALIAS(led_blue)
+
+static const struct gpio_dt_spec red_led = GPIO_DT_SPEC_GET(RED_LED_NODE, gpios);
+static const struct gpio_dt_spec green_led = GPIO_DT_SPEC_GET(GREEN_LED_NODE, gpios);
+static const struct gpio_dt_spec blue_led = GPIO_DT_SPEC_GET(BLUE_LED_NODE, gpios);
+
+int led_init(void) {
+
+    if (!gpio_is_ready_dt(&red_led) ||
+        !gpio_is_ready_dt(&green_led) ||
+        !gpio_is_ready_dt(&blue_led)) {
+            
+        LOG_ERR("LED GPIO device not ready");
+        return -ENODEV;
+
+    }
+
+    if (gpio_pin_configure_dt(&red_led, GPIO_OUTPUT_INACTIVE) != 0 ||
+        gpio_pin_configure_dt(&green_led, GPIO_OUTPUT_INACTIVE) != 0 ||
+        gpio_pin_configure_dt(&blue_led, GPIO_OUTPUT_INACTIVE) != 0) {
+            
+        LOG_ERR("Failed to configure LED GPIO pins");
+        return -EIO;
+
+    }
+
+    return 0;
+}
+
+int led_set_color(led_color_t color) {
+    int red = 0;
+    int green = 0;
+    int blue = 0;
+
+    switch (color) {
+        case LED_COLOR_OFF:
+            red = 0;
+            green = 0;
+            blue = 0;
+            break;
+        case LED_COLOR_RED:
+            red = 1;
+            green = 0;
+            blue = 0;
+            break;
+        case LED_COLOR_GREEN:
+            red = 0;
+            green = 1;
+            blue = 0;
+            break;
+        case LED_COLOR_BLUE:
+            red = 0;
+            green = 0;
+            blue = 1;
+            break;
+        case LED_COLOR_YELLOW:
+            red = 1;
+            green = 1;
+            blue = 0;
+            break;
+        default:
+            LOG_ERR("Invalid LED color");
+            return -EINVAL;
+    }
+
+    if (gpio_pin_set_dt(&red_led, red) != 0 ||
+        gpio_pin_set_dt(&green_led, green) != 0 ||
+        gpio_pin_set_dt(&blue_led, blue) != 0) {
+            
+        LOG_ERR("Failed to set LED color");
+        return -EIO;
+
+    }
+
+    return 0;
+}

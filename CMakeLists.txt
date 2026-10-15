@@ -8,6 +8,7 @@ project(brightness_control)
 target_sources(app PRIVATE 
     src/main.c
     src/events.c
+    src/led.c
 )
 
 target_include_directories(app PRIVATE)
