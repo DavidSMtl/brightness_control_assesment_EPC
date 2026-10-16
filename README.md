@@ -4,10 +4,6 @@
 
 Embedded Platforms and Communication for IoT, MIoT (UPM)
 
-### Authors: 
-- David Suárez
-- David Márquez
-
 ### Summary
 
 This repository consists on the implementation of an IoT system designed to monitor light levels and control an RGB LED using **Zephyr Real-Time Operating System (RTOS)**. The board system used is the **STM32WL55JC** microcontroller (Nucleo-WL55JC board).
