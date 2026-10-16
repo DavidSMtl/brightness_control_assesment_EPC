@@ -1,4 +1,4 @@
-#include button_service.h
+#include "button_service.h"
 #include "events.h"
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/sys/printk.h>
@@ -16,7 +16,7 @@ static void long_press_handler(struct k_timer *timer) {
     is_long_press_handled = true;
 
     event_t event = {
-        .type = APP_EVENT_BUTTON_LONG_PRESS,
+        .type = EVENT_BUTTON_LONG_PRESS,
         .adc_raw = 0,
         .brightness_pct = 0
     };
@@ -29,9 +29,10 @@ K_TIMER_DEFINE(long_press_timer, long_press_handler, NULL);
 static void button_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins) {
     int val = gpio_pin_get_dt(&button);
 
-    if ( val > 0) 
+    if ( val > 0) {
         is_long_press_handled = false;
         k_timer_start(&long_press_timer, K_SECONDS(1), K_NO_WAIT);
+    }
     else {
        k_timer_stop(&long_press_timer);
        
@@ -47,12 +48,12 @@ static void button_callback(const struct device *dev, struct gpio_callback *cb, 
 }
 
 int button_service_init(void) {
-    if (!device_is_ready_dt(&button)) {
+    if (!gpio_is_ready_dt(&button)) {
         printk("Error: button device is not ready\n");
         return -ENODEV;
     }
 
-    gpio_configure_dt(&button, GPIO_INPUT);
+    gpio_pin_configure_dt(&button, GPIO_INPUT);
     gpio_pin_interrupt_configure_dt(&button, GPIO_INT_EDGE_BOTH);
 
     gpio_init_callback(&button_cb_data, button_callback, BIT(button.pin));

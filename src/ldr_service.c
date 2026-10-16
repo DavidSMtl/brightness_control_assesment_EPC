@@ -33,7 +33,7 @@ void ldr_thread_entry(void *p1, void *p2, void *p3) {
     while (1) {
         struct adc_sequence sequence = {
             .buffer = &sample,
-            .buffer_size = sizeof(sample);
+            .buffer_size = sizeof(sample),
         };
         
         if (adc_sequence_init_dt(&ldr_adc, &sequence) != 0) {
@@ -48,8 +48,8 @@ void ldr_thread_entry(void *p1, void *p2, void *p3) {
 
         event_t event = {
             .type = EVENT_ADC_READING,
-            .adc_raw = sample;
-            .brightness_pct = (sample * 100) / 4095; 
+            .adc_raw = sample,
+            .brightness_pct = (sample * 100) / 4095,
         };
 
         events_send(&event);
