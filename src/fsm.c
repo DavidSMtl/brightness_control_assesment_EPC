@@ -18,7 +18,7 @@ static led_color_t color_from_brightness(uint8_t pct) {
     if (pct < 33) {
         return LED_COLOR_RED;
     }
-    if (pct < 66) {
+    if (pct <= 66) {
         return LED_COLOR_YELLOW;
     }
     return LED_COLOR_GREEN;
