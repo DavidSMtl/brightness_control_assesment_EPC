@@ -8,6 +8,8 @@ project(brightness_control)
 target_sources(app PRIVATE 
     src/main.c
     src/events.c
+    src/button_service.c
+    src/ldr_service.c
 )
 
 target_include_directories(app PRIVATE)
