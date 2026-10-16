@@ -9,6 +9,7 @@ target_sources(app PRIVATE
     src/main.c
     src/events.c
     src/led.c
+    src/fsm.c
 )
 
 target_include_directories(app PRIVATE)
