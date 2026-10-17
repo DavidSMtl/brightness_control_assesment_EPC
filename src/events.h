@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <zephyr/kernel.h>
 
+#define ADC_FULL_SCALE 4095U
+
 typedef enum { // Event types
     EVENT_NONE = 0,
     EVENT_BUTTON_SHORT_PRESS,
