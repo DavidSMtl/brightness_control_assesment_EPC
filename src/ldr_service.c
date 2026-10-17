@@ -15,6 +15,21 @@ K_THREAD_DEFINE(ldr_thread_id, LDR_THREAD_STACK_SIZE,
                 ldr_thread_entry, NULL, NULL, NULL, 
                 LDR_THREAD_PRIORITY, 0, 0);
 
+void ldr_service_suspend(void) {
+    
+    #if DT_NODE_EXISTS(DT_ALIAS(ldr_pwr)) 
+    gpio_pin_set_dt(&ldr_pwr, 0);
+    #endif
+
+    k_thread_suspend(ldr_thread_id);
+    printk("LDR Thread suspended\n");
+}
+
+void ldr_service_resume(void) {
+    k_thread_resume(ldr_thread_id);
+    printk("LDR Thread resumed\n");
+}
+
 void ldr_thread_entry(void *p1, void *p2, void *p3) {
     ARG_UNUSED(p1);
     ARG_UNUSED(p2);

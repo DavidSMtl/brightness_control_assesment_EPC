@@ -1,6 +1,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 #include "events.h"
+#include "ldr_service.h"
 #include "led.h"
 #include "fsm.h"
 
@@ -30,16 +31,19 @@ static void enter_mode (fsm_mode_t new_mode) {
     switch (mode) {
         case FSM_MODE_NORMAL:
             printk("Mode: NORMAL\n");
+            ldr_service_resume();
             led_set_color(color_from_brightness(last_brightness_pct));
             break;
 
         case FSM_MODE_BLUE:
             printk("Mode: BLUE\n");
+            ldr_service_suspend();
             led_set_color(LED_COLOR_BLUE);
             break;
 
         case FSM_MODE_OFF:
             printk("System OFF\n");
+            ldr_service_suspend();
             led_set_color(LED_COLOR_OFF);
             break;
     }
