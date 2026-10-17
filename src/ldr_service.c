@@ -2,10 +2,14 @@
 #include "events.h"
 #include <zephyr/drivers/adc.h>
 #include <zephyr/sys/printk.h>
+#include <zephyr/drivers/gpio.h>
 
 #define ADC_NODE DT_ALIAS(analog_in_pin)
-
 static const struct adc_dt_spec ldr_adc = ADC_DT_SPEC_GET(ADC_NODE);
+
+#define LDR_PWR_NODE DT_ALIAS(ldr_pwr)
+static const struct gpio_dt_spec ldr_pwr = GPIO_DT_SPEC_GET(LDR_PWR_NODE, gpios);
+
 static int16_t sample;
 
 #define LDR_THREAD_STACK_SIZE 1024
@@ -17,9 +21,9 @@ K_THREAD_DEFINE(ldr_thread_id, LDR_THREAD_STACK_SIZE,
 
 void ldr_service_suspend(void) {
     
-    #if DT_NODE_EXISTS(DT_ALIAS(ldr_pwr)) 
-    gpio_pin_set_dt(&ldr_pwr, 0);
-    #endif
+    if (gpio_is_ready_dt(&ldr_pwr)) {
+        gpio_pin_set_dt(&ldr_pwr, 0);
+    } 
 
     k_thread_suspend(ldr_thread_id);
     printk("LDR Thread suspended\n");
@@ -45,7 +49,22 @@ void ldr_thread_entry(void *p1, void *p2, void *p3) {
         return;
     }
 
+    if (!gpio_is_ready_dt(&ldr_pwr)) {
+        printk("Error: GPIO pin is not ready\n");
+        return;
+    }
+
+    if (gpio_pin_configure_dt(&ldr_pwr, GPIO_OUTPUT_INACTIVE) != 0) {
+        printk("Error: Configuration of the GPIO Supply pin failed\n");
+        return;
+    }
+
     while (1) {
+
+        gpio_pin_set_dt(&ldr_pwr, 1);
+
+        k_busy_wait(1000);
+
         struct adc_sequence sequence = {
             .buffer = &sample,
             .buffer_size = sizeof(sample),
@@ -60,7 +79,6 @@ void ldr_thread_entry(void *p1, void *p2, void *p3) {
             k_msleep(2000);
             continue;
         }
-
         event_t event = {
             .type = EVENT_ADC_READING,
             .adc_raw = sample,
@@ -68,6 +86,8 @@ void ldr_thread_entry(void *p1, void *p2, void *p3) {
         };
 
         events_send(&event);
+        gpio_pin_set_dt(&ldr_pwr, 0);
+
         k_msleep(2000);
     }
 }

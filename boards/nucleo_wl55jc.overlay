@@ -17,7 +17,7 @@
     ldr_pwr_supply {
         compatible = "gpio-leds";
         ldr_pwr_node: ldr_pwr_node {
-            gpios = <gpioa 0 GPIO_ACTIVE_HIGH>;
+            gpios = <&gpiob 12 GPIO_ACTIVE_HIGH>;
             label = "LDR_POWER_SUPPLY";
         };
     };
