@@ -3,9 +3,13 @@
 
 #include <zephyr/kernel.h>
 
-// Thread declaration for LDR service
+/* Punto de entrada usado por la definición del hilo de adquisición del LDR. */
 void ldr_thread_entry(void *p1, void *p2, void *p3);
+
+/* Solicita detener las medidas periódicas en un punto seguro del bucle. */
 void ldr_service_suspend(void);
+
+/* Habilita las medidas y despierta al hilo si estaba esperando suspensión. */
 void ldr_service_resume(void);
 
 #endif

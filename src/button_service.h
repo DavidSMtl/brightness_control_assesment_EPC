@@ -3,6 +3,10 @@
 
 #include <zephyr/kernel.h>
 
-int button_service_init(void); // Initialize GPIO B2 and configure interrupts.
+/*
+ * Prepara B2 como entrada, registra sus interrupciones y habilita la detección
+ * de pulsaciones cortas y largas. Devuelve 0 si el dispositivo está disponible.
+ */
+int button_service_init(void);
 
-#endif 
+#endif
