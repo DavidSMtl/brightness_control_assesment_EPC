@@ -3,6 +3,7 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/sys/atomic.h>
 
 #define ADC_NODE DT_ALIAS(analog_in_pin)
 static const struct adc_dt_spec ldr_adc = ADC_DT_SPEC_GET(ADC_NODE);
@@ -14,6 +15,11 @@ static int16_t sample;
 
 #define LDR_THREAD_STACK_SIZE 1024
 #define LDR_THREAD_PRIORITY 7
+#define LDR_PERIOD_MS 2000
+#define LDR_SETTLE_MS 1
+
+static atomic_t acquisition_enabled = ATOMIC_INIT(1);
+static K_SEM_DEFINE(resume_sem, 0, 1);
 
 K_THREAD_DEFINE(ldr_thread_id, LDR_THREAD_STACK_SIZE,
                 ldr_thread_entry, NULL, NULL, NULL, 
@@ -21,17 +27,32 @@ K_THREAD_DEFINE(ldr_thread_id, LDR_THREAD_STACK_SIZE,
 
 void ldr_service_suspend(void) {
     
-    if (gpio_is_ready_dt(&ldr_pwr)) {
-        gpio_pin_set_dt(&ldr_pwr, 0);
-    } 
-
-    k_thread_suspend(ldr_thread_id);
-    printk("LDR Thread suspended\n");
+    atomic_set(&acquisition_enabled, 0);
+    printk("LDR acquisition suspended\n");
 }
 
 void ldr_service_resume(void) {
-    k_thread_resume(ldr_thread_id);
-    printk("LDR Thread resumed\n");
+    atomic_set(&acquisition_enabled, 1);
+    k_sem_give(&resume_sem);
+    printk("LDR acquisition resumed\n");
+}
+
+static int ldr_acquire(event_t *event, struct adc_sequence *seq) {
+    gpio_pin_set_dt(&ldr_pwr, 1);
+    k_msleep(LDR_SETTLE_MS);
+    int ret = adc_read_dt(&ldr_adc, seq);
+    gpio_pin_set_dt(&ldr_pwr, 0);           /* Always off, even on error */
+
+    if (ret != 0) {
+        return ret;
+    }
+
+    int32_t value = sample < 0 ? 0 : sample;
+
+    event->type = EVENT_ADC_READING;
+    event->adc_raw = (uint16_t)value;
+    event->brightness_pct = (uint8_t)MIN((value * 100) / ADC_FULL_SCALE, 100);
+    return 0;
 }
 
 void ldr_thread_entry(void *p1, void *p2, void *p3) {
@@ -39,13 +60,19 @@ void ldr_thread_entry(void *p1, void *p2, void *p3) {
     ARG_UNUSED(p2);
     ARG_UNUSED(p3);
 
-    if (!adc_is_ready_dt(&ldr_adc)) {
-        printk("Error: ADC device is not ready\n");
+    struct adc_sequence sequence = {
+        .buffer = &sample,
+        .buffer_size = sizeof(sample),
+    };
+
+    if (!adc_is_ready_dt(&ldr_adc) || !gpio_is_ready_dt(&ldr_pwr)) {
+        printk("Error: LDR devices is not ready\n");
         return;
     }
 
-    if (adc_channel_setup_dt(&ldr_adc) != 0) {
-        printk("Error: ADC channel setup failed\n");
+    if (adc_channel_setup_dt(&ldr_adc) != 0 ||
+        adc_sequence_init_dt(&ldr_adc, &sequence) != 0) {
+        printk("Error: LDR setup failed\n");
         return;
     }
 
@@ -59,36 +86,30 @@ void ldr_thread_entry(void *p1, void *p2, void *p3) {
         return;
     }
 
+    int64_t next_wakeup = k_uptime_get();
+
     while (1) {
-
-        gpio_pin_set_dt(&ldr_pwr, 1);
-
-        k_busy_wait(1000);
-
-        struct adc_sequence sequence = {
-            .buffer = &sample,
-            .buffer_size = sizeof(sample),
-        };
-        
-        if (adc_sequence_init_dt(&ldr_adc, &sequence) != 0) {
-            k_msleep(2000);
-            continue;
+        if (!atomic_get(&acquisition_enabled)) {
+            while (!atomic_get(&acquisition_enabled)) {
+                k_sem_take(&resume_sem, K_FOREVER);
+            }
+            next_wakeup = k_uptime_get();
         }
 
-        if (adc_read_dt(&ldr_adc, &sequence) != 0) {
-            k_msleep(2000);
-            continue;
+        event_t event;
+        if (ldr_acquire(&event, &sequence) == 0) {
+            events_send(&event);
+        } else {
+            printk("Error:ADC read failed\n");
         }
-        event_t event = {
-            .type = EVENT_ADC_READING,
-            .adc_raw = sample,
-            .brightness_pct = (sample * 100) / 4095,
-        };
 
-        events_send(&event);
-        gpio_pin_set_dt(&ldr_pwr, 0);
-
-        k_msleep(2000);
+        next_wakeup += LDR_PERIOD_MS;
+        int64_t remaining = next_wakeup - k_uptime_get();
+        if (remaining > 0) {
+            k_msleep(remaining);
+        } else {
+            next_wakeup = k_uptime_get();
+        }
     }
 }
 
