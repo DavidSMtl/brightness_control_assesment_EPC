@@ -52,8 +52,8 @@ The RGB LED uses a **common anode** configuration connected to 3.3V. Thus, the c
    * Brightness percentage is calculated as:
      
    * **Low Light (< 33.3%)**: Red LED turned ON.
-   * **Medium Light (33.3% - 66.6%)**: Green LED turned ON.
-   * **High Light (> 66.6%)**: White LED turned ON (Red + Green + Blue).
+   * **Medium Light (33.3% - 66.6%)**: Yellow LED turned ON.
+   * **High Light (> 66.6%)**: Green LED turned ON.
 2. **Blue mode**:
    * The RGB LED remains solid **Blue** regardless of ambient light readings.
 3. **OFF mode**:
