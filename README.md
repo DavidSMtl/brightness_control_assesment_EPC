@@ -15,7 +15,6 @@ operating mode with button **B2**. The application runs on **Zephyr RTOS** on a
 | Board | NUCLEO-WL55JC (STM32WL55JC), schematic MB1389 |
 | Zephyr / SDK | Zephyr 4.5 / Zephyr SDK 1.0.1 |
 | Build system | `west` |
-| Console | LPUART1 over the ST-LINK virtual COM port, 115200 8N1 |
 
 ## 2. Requirements and where they are implemented
 
@@ -83,7 +82,7 @@ The ADC range is 0 to 4095. The brightness percentage is `raw * 100 / 4095`.
 
 ### 3.4 Button B2
 
-B2 is wired to PA1 (`user_button_2` in the board devicetree, aliased as `sw0` in our
+B2 is wired to PA1 (`user_button_2` in the board devicetree, aliased as `sw1` in our
 overlay). The devicetree declares it as `GPIO_ACTIVE_LOW | GPIO_PULL_UP`
 (`gpios = <&gpioa 1 0x11>`): the MCU internal pull-up is enabled and a press pulls the
 line low, which the driver reports as logical 1.

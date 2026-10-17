@@ -3,7 +3,7 @@
 
 / {
     aliases {
-        sw0 = &user_button_2;
+        sw1 = &user_button_2;
 
         led-red = &led_red_node;
         led-green = &led_green_node;
