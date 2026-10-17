@@ -12,7 +12,7 @@
 #define LDR_PM_UNLOCK() pm_policy_state_lock_put(PM_STATE_SUSPEND_TO_IDLE, PM_ALL_SUBSTATES)
 #else
 #define LDR_PM_LOCK() do { } while (0)
-#define LDR_PM_UNLOCK() do { } while (0)
+#define LDR_PM_UNLOCK() do { } while (0)
 #endif
 
 #define ADC_NODE DT_ALIAS(analog_in_pin)
