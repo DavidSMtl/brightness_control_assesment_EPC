@@ -10,6 +10,16 @@
         led-blue = &led_blue_node;
 
         analog-in-pin = &zephyr_user;
+
+        ldr-pwr = &ldr_pwr_node;
+    };
+
+    ldr_pwr_supply {
+        compatible = "gpio-leds";
+        ldr_pwr_node: ldr_pwr_node {
+            gpios = <gpioa 0 GPIO_ACTIVE_HIGH>;
+            label = "LDR_POWER_SUPPLY";
+        };
     };
 
     zephyr_user: zephyr,user {
