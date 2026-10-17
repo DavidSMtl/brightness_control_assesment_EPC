@@ -17,7 +17,7 @@ Since the function of the application is to control an RGB LED mode of operation
 * **Button Handling**: Distinguish between a short press (< 1s) and a long press (>= 1s) via timers.
 * **Periodic Sensor Sampling**: One thread dedicated to read LDR sensor data via ADC pin every 2 seconds.
 * **Event-Driven Architecture**: Registrated information turns into an `event_t` datatype to be managed in a message queue. This way, Zephyr can manage information without conflicts.
-* **Low-Power Optimizations**: Thread suspension and hardware interrupts enabling automatic CPU sleep (). 
+* **Low-Power Optimizations**: Thread suspension, hardware interrupts enabling automatic CPU sleep and GPIO pin power management for LDR measurement. 
 
 
 ##  Hardware Setup
@@ -78,7 +78,7 @@ The application considers a modular and decoupled approach consisting of produce
 
 * **Event-Driven Execution**: By blocking threads with  when idle, Zephyr's scheduler places the Cortex-M4 CPU into low-power sleep ( - Wait For Interrupt) automatically when no events are pending ().
 * **Zero Polling**: No busy-wait loops are used for button input or timing.
-* **Future Optimization**: Ultra-low-power operation can be achieved by powering the LDR voltage divider from a GPIO pin (sensor duty cycling), eliminating static current draw between 2-second sampling intervals.
+* **Power optimization**: The LDR is powered directly using a GPIO pin, this enables the possibility to eliminate current draw during the 2 second wait used for the measurements.
 
 
 ## Execution Guide
