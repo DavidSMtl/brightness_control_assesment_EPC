@@ -89,7 +89,10 @@ static void fsm_thread(void *p1, void *p2, void *p3) {
     ARG_UNUSED(p2);
     ARG_UNUSED(p3);
 
-    led_init();
+    if (led_init() != 0) {
+        printk("Error: LED init failed\n");
+        return;
+    }
     enter_mode(FSM_MODE_NORMAL);
 
     while (1) {
