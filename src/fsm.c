@@ -10,16 +10,19 @@
 
 static fsm_mode_t mode = FSM_MODE_NORMAL;
 static uint8_t last_brightness_pct = 0;     /* Con esto hacemos que los cambios de modos sean más suaves y dinámicos */
+static uint16_t last_adc_raw = 0;
 
 fsm_mode_t fsm_get_mode(void) {
     return mode;
 }
 
-static led_color_t color_from_brightness(uint8_t pct) {
-    if (pct < 33) {
+static led_color_t color_from_raw(uint16_t raw) {
+    uint32_t scaled = (uint32_t)raw * 100U;
+
+    if (scaled < 33U * ADC_FULL_SCALE) {
         return LED_COLOR_RED;
     }
-    if (pct <= 66) {
+    if (scaled <= 66U * ADC_FULL_SCALE) {
         return LED_COLOR_YELLOW;
     }
     return LED_COLOR_GREEN;
@@ -32,7 +35,7 @@ static void enter_mode (fsm_mode_t new_mode) {
         case FSM_MODE_NORMAL:
             printk("Mode: NORMAL\n");
             ldr_service_resume();
-            led_set_color(color_from_brightness(last_brightness_pct));
+            led_set_color(color_from_raw(last_adc_raw));
             break;
 
         case FSM_MODE_BLUE:
@@ -67,10 +70,10 @@ static void handle_event (const event_t *event) {
 
         case EVENT_ADC_READING:
             if (mode == FSM_MODE_NORMAL) {
-                last_brightness_pct = event->brightness_pct;
+                last_adc_raw = event->adc_raw;
                 printk("ADC raw: %u, brightness: %u%%\n",
                        event->adc_raw, event->brightness_pct);
-                led_set_color(color_from_brightness(event->brightness_pct));
+                led_set_color(color_from_raw(event->adc_raw));
             }
             break;
 
