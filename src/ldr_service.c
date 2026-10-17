@@ -5,6 +5,16 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/sys/atomic.h>
 
+#ifdef CONFIG_PM
+#include <zephyr/pm/policy.h>
+/* A conversion cannot complete while the system is in a STOP state */
+#define LDR_PM_LOCK() pm_policy_state_lock_get(PM_STATE_SUSPEND_TO_IDLE, PM_ALL_SUBSTATES)
+#define LDR_PM_UNLOCK() pm_policy_state_lock_put(PM_STATE_SUSPEND_TO_IDLE, PM_ALL_SUBSTATES)
+#else
+#define LDR_PM_LOCK() do { } while (0)
+#define LDR_PM_UNLOCK() do { } while (0)
+#endif
+
 #define ADC_NODE DT_ALIAS(analog_in_pin)
 static const struct adc_dt_spec ldr_adc = ADC_DT_SPEC_GET(ADC_NODE);
 
@@ -38,10 +48,17 @@ void ldr_service_resume(void) {
 }
 
 static int ldr_acquire(event_t *event, struct adc_sequence *seq) {
+    LDR_PM_LOCK();
+
+    //printk("LDR: power on\n");
     gpio_pin_set_dt(&ldr_pwr, 1);
     k_msleep(LDR_SETTLE_MS);
+    //printk("LDR: reading ADC\n");
     int ret = adc_read_dt(&ldr_adc, seq);
+    //printk("LDR: ADC done, ret=%d\n", ret);
     gpio_pin_set_dt(&ldr_pwr, 0);           /* Always off, even on error */
+
+    LDR_PM_UNLOCK();
 
     if (ret != 0) {
         return ret;
@@ -65,7 +82,7 @@ void ldr_thread_entry(void *p1, void *p2, void *p3) {
         .buffer_size = sizeof(sample),
     };
 
-    if (!adc_is_ready_dt(&ldr_adc) || !gpio_is_ready_dt(&ldr_pwr)) {
+    if (!adc_is_ready_dt(&ldr_adc)) {
         printk("Error: LDR devices is not ready\n");
         return;
     }
