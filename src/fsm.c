@@ -9,7 +9,6 @@
 #define FSM_PRIORITY 5
 
 static fsm_mode_t mode = FSM_MODE_NORMAL;
-static uint8_t last_brightness_pct = 0;     /* Con esto hacemos que los cambios de modos sean más suaves y dinámicos */
 static uint16_t last_adc_raw = 0;
 
 fsm_mode_t fsm_get_mode(void) {

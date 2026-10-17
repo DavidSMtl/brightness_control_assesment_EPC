@@ -1,9 +1,6 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
-#include <zephyr/logging/log.h>
 #include "led.h"
-
-LOG_MODULE_REGISTER(led, LOG_LEVEL_INF);
 
 #define RED_LED_NODE DT_ALIAS(led_red)
 #define GREEN_LED_NODE DT_ALIAS(led_green)
@@ -19,7 +16,7 @@ int led_init(void) {
         !gpio_is_ready_dt(&green_led) ||
         !gpio_is_ready_dt(&blue_led)) {
             
-        LOG_ERR("LED GPIO device not ready");
+        printk("LED GPIO device not ready\n");
         return -ENODEV;
 
     }
@@ -28,7 +25,7 @@ int led_init(void) {
         gpio_pin_configure_dt(&green_led, GPIO_OUTPUT_INACTIVE) != 0 ||
         gpio_pin_configure_dt(&blue_led, GPIO_OUTPUT_INACTIVE) != 0) {
             
-        LOG_ERR("Failed to configure LED GPIO pins");
+        printk("Failed to configure LED GPIO pins\n");
         return -EIO;
 
     }
@@ -68,7 +65,7 @@ int led_set_color(led_color_t color) {
             blue = 0;
             break;
         default:
-            LOG_ERR("Invalid LED color");
+            printk("Invalid LED color\n");
             return -EINVAL;
     }
 
@@ -76,7 +73,7 @@ int led_set_color(led_color_t color) {
         gpio_pin_set_dt(&green_led, green) != 0 ||
         gpio_pin_set_dt(&blue_led, blue) != 0) {
             
-        LOG_ERR("Failed to set LED color");
+        printk("Failed to set LED color\n");
         return -EIO;
 
     }
