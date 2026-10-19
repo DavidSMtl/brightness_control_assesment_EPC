@@ -3,7 +3,7 @@
 
 #include <zephyr/kernel.h>
 
-/* Colores que el controlador RGB puede representar. */
+/* Colors that the RGB controller can represent. */
 typedef enum {
     LED_COLOR_OFF = 0,
     LED_COLOR_RED,
@@ -12,10 +12,10 @@ typedef enum {
     LED_COLOR_YELLOW,
 } led_color_t;
 
-/* Comprueba los GPIO RGB y los configura inicialmente como salidas apagadas. */
+/* Checks the RGB GPIOs and initially configures them as off outputs. */
 int led_init(void);
 
-/* Aplica el color indicado; devuelve -EINVAL para un valor no reconocido. */
+/* Applies the specified color; returns -EINVAL for an unrecognized value. */
 int led_set_color(led_color_t color);
 
 #endif // LED_H

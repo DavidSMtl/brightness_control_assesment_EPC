@@ -4,13 +4,13 @@
 #include <stdint.h>
 #include <zephyr/kernel.h>
 
-/* Resolución del ADC configurado: 12 bits, con valores de 0 a 4095. */
+/* Configured ADC resolution: 12 bits, with values from 0 to 4095. */
 #define ADC_FULL_SCALE 4095U
 
 /*
- * Tipos de mensajes que pueden publicar los servicios. EVENT_NONE sirve como
- * valor inicial; los tres eventos restantes representan entradas del botón o
- * una medida ya obtenida por el servicio LDR.
+ * Types of messages that services can publish. EVENT_NONE serves as the
+ * initial value; the remaining three events represent button input or a
+ * measurement already obtained by the LDR service.
  */
 typedef enum {
     EVENT_NONE = 0,
@@ -20,29 +20,29 @@ typedef enum {
 } event_type_t;
 
 /*
- * Formato común que viaja por la cola. Los campos de medida solo tienen
- * significado cuando type es EVENT_ADC_READING; los eventos del botón los
- * inicializan a cero para que la estructura siempre esté completamente definida.
+ * Common format carried through the queue. Measurement fields are meaningful
+ * only when type is EVENT_ADC_READING; button events initialize them to zero
+ * so the structure is always fully defined.
  */
 typedef struct {
     event_type_t type;
-    uint16_t adc_raw;        /* Solo válido para EVENT_ADC_READING. */
-    uint16_t brightness_pct; /* Porcentaje de 0 a 100; solo válido para EVENT_ADC_READING. */
+    uint16_t adc_raw;        /* Valid only for EVENT_ADC_READING. */
+    uint16_t brightness_pct; /* Percentage from 0 to 100; valid only for EVENT_ADC_READING. */
 } event_t;
 
-/* Inicializa la cola compartida; se llama una vez antes de arrancar servicios. */
+/* Initializes the shared queue; called once before starting the services. */
 void events_init(void);
 
 /*
- * Copia un evento en la cola sin bloquear. Devuelve 0 si se encoló y -ENOMSG
- * si no había espacio; en ese caso events.c también registra el descarte.
+ * Copies an event to the queue without blocking. Returns 0 if it was queued
+ * and -ENOMSG if there was no space; in that case events.c also logs the drop.
  */
 int events_send(const event_t *event);
 
 /*
- * Extrae el siguiente evento respetando timeout. El resultado de Zephyr se
- * devuelve directamente: 0 indica éxito y un código negativo indica fallo o
- * expiración del tiempo de espera.
+ * Retrieves the next event subject to timeout. The Zephyr result is returned
+ * directly: 0 indicates success, and a negative code indicates failure or
+ * timeout expiration.
  */
 int events_receive(event_t *event, k_timeout_t timeout);
 

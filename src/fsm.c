@@ -8,9 +8,9 @@
 #define FSM_STACK_SIZE 1024
 #define FSM_PRIORITY 5
 
-/* Estado que consulta y modifica exclusivamente el hilo de la FSM. */
+/* State read and modified exclusively by the FSM thread. */
 static fsm_mode_t mode = FSM_MODE_NORMAL;
-/* Última muestra válida; permite recuperar el color al volver a NORMAL. */
+/* Last valid sample; used to restore the color when returning to NORMAL. */
 static uint16_t last_adc_raw = 0;
 
 fsm_mode_t fsm_get_mode(void) {
@@ -19,8 +19,8 @@ fsm_mode_t fsm_get_mode(void) {
 
 static led_color_t color_from_raw(uint16_t raw) {
     /*
-     * Compara la lectura sin convertirla primero a porcentaje entero: así los
-     * límites 33 % y 66 % no dependen del truncamiento de la división.
+     * Compare the reading without first converting it to an integer percentage,
+     * so the 33% and 66% thresholds do not depend on division truncation.
      */
     uint32_t scaled = (uint32_t)raw * 100U;
 
@@ -34,27 +34,27 @@ static led_color_t color_from_raw(uint16_t raw) {
 }
 
 static void enter_mode (fsm_mode_t new_mode) {
-    /* Se actualiza el estado antes de aplicar las acciones propias del modo. */
+    /* Update the state before applying the actions associated with the mode. */
     mode = new_mode;
 
     switch (mode) {
         case FSM_MODE_NORMAL:
             printk("Mode: NORMAL\n");
-            /* En NORMAL se retoman las medidas y se presenta el último color. */
+            /* In NORMAL, resume measurements and display the last color. */
             ldr_service_resume();
             led_set_color(color_from_raw(last_adc_raw));
             break;
 
         case FSM_MODE_BLUE:
             printk("Mode: BLUE\n");
-            /* El color azul fijo distingue este modo y no se necesitan medidas. */
+            /* The fixed blue color distinguishes this mode; measurements are unnecessary. */
             ldr_service_suspend();
             led_set_color(LED_COLOR_BLUE);
             break;
 
         case FSM_MODE_OFF:
             printk("System OFF\n");
-            /* OFF apaga la salida y detiene la adquisición periódica del LDR. */
+            /* OFF turns off the output and stops periodic LDR sampling. */
             ldr_service_suspend();
             led_set_color(LED_COLOR_OFF);
             break;
@@ -65,8 +65,8 @@ static void handle_event (const event_t *event) {
     switch (event->type) {
         case EVENT_BUTTON_SHORT_PRESS:
             /*
-             * Una pulsación corta alterna NORMAL y BLUE. Desde OFF se vuelve
-             * explícitamente a NORMAL, tal como define el comportamiento.
+             * A short press toggles between NORMAL and BLUE. From OFF, it
+             * explicitly returns to NORMAL, as defined by the behavior.
              */
             if (mode == FSM_MODE_NORMAL) {
                 enter_mode(FSM_MODE_BLUE);
@@ -76,7 +76,7 @@ static void handle_event (const event_t *event) {
             break;
 
         case EVENT_BUTTON_LONG_PRESS:
-            /* La pulsación larga lleva a OFF; en OFF no produce otra transición. */
+            /* A long press enters OFF; in OFF, it causes no further transition. */
             if (mode != FSM_MODE_OFF) {
                 enter_mode(FSM_MODE_OFF);
             }
@@ -84,8 +84,8 @@ static void handle_event (const event_t *event) {
 
         case EVENT_ADC_READING:
             /*
-             * Solo se aceptan muestras para la interfaz cuando está en NORMAL.
-             * En los demás modos la FSM las ignora y no cambia el color guardado.
+             * Samples are accepted for the interface only in NORMAL.
+             * In other modes, the FSM ignores them and leaves the stored color unchanged.
              */
             if (mode == FSM_MODE_NORMAL) {
                 last_adc_raw = event->adc_raw;
@@ -107,7 +107,7 @@ static void fsm_thread(void *p1, void *p2, void *p3) {
     ARG_UNUSED(p2);
     ARG_UNUSED(p3);
 
-    /* La FSM inicializa el hardware LED antes de emitir su primer estado. */
+    /* The FSM initializes the LED hardware before announcing its first state. */
     if (led_init() != 0) {
         printk("Error: LED init failed\n");
         return;
@@ -115,8 +115,8 @@ static void fsm_thread(void *p1, void *p2, void *p3) {
     enter_mode(FSM_MODE_NORMAL);
 
     /*
-     * La cola desacopla esta lógica de los servicios productores. K_FOREVER
-     * evita sondeo: el hilo queda bloqueado hasta recibir un mensaje.
+     * The queue decouples this logic from the producer services. K_FOREVER
+     * avoids polling: the thread blocks until it receives a message.
      */
     while (1) {
         if (events_receive(&event, K_FOREVER) == 0) {
@@ -125,5 +125,5 @@ static void fsm_thread(void *p1, void *p2, void *p3) {
     }
 }
 
-/* Hilo de la máquina de estados: pila de 1024 bytes y prioridad 5 en Zephyr. */
+/* State machine thread: 1024-byte stack and priority 5 in Zephyr. */
 K_THREAD_DEFINE(fsm_tid, FSM_STACK_SIZE, fsm_thread, NULL, NULL, NULL, FSM_PRIORITY, 0, 0);

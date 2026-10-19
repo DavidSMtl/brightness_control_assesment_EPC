@@ -3,13 +3,13 @@
 
 #include <zephyr/kernel.h>
 
-/* Punto de entrada usado por la definición del hilo de adquisición del LDR. */
+/* Entry point used by the LDR acquisition thread definition. */
 void ldr_thread_entry(void *p1, void *p2, void *p3);
 
-/* Solicita detener las medidas periódicas en un punto seguro del bucle. */
+/* Requests that periodic measurements stop at a safe point in the loop. */
 void ldr_service_suspend(void);
 
-/* Habilita las medidas y despierta al hilo si estaba esperando suspensión. */
+/* Enables measurements and wakes the thread if it was waiting while suspended. */
 void ldr_service_resume(void);
 
 #endif

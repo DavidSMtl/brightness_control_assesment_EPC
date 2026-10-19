@@ -4,8 +4,8 @@
 #include <zephyr/kernel.h>
 
 /*
- * Prepara B2 como entrada, registra sus interrupciones y habilita la detección
- * de pulsaciones cortas y largas. Devuelve 0 si el dispositivo está disponible.
+ * Configures B2 as an input, registers its interrupts, and enables detection
+ * of short and long presses. Returns 0 if the device is available.
  */
 int button_service_init(void);
 
